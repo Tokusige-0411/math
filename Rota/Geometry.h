@@ -7,8 +7,6 @@
 // ベクトルを正規化する関数
 // 正規化したベクトルを返す関数
 
-using Position2f = Vector2f;
-
 struct Vector2f
 {
 	float x;

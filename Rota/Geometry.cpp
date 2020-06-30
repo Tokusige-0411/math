@@ -19,7 +19,7 @@ Vector2f operator*(const Vector2f& lval, const int val)
 
 float Vector2f::Magnitude() const
 {
-	return hypot(x, y);
+	return (float)hypot(x, y);
 }
 
 void Vector2f::Normalize()

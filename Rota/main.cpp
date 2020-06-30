@@ -32,14 +32,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		auto diff = targetPos - centorPos;
 		auto angle = atan2(diff.y, diff.x);
 
-		Vector2 v = {speed * cos(angle), speed  * sin(angle)};
-
 		if (frame % 120 == 0)
 		{
 			bulPos = centorPos;
-			bulVec = Vector2f(2.0, 2.0);
+			bulVec = Vector2f(diff.x, diff.y);
 			bulVec.Normalize();
+			bulVec = bulVec * 5;
 		}
+
+		bulPos = bulPos + bulVec;
 
 		ClsDrawScreen();
 
@@ -48,6 +49,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		DrawRotaGraph(centorPos.x, centorPos.y, 1.0f,
 			angle,
 			catH, true, false);
+
+		DrawCircle(bulPos.x, bulPos.y, 3, 0xffffff, true);
 
 		ScreenFlip();
 
