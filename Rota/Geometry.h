@@ -20,7 +20,7 @@ struct Vector2f
 
 Vector2f operator+(const Vector2f& lval, const Vector2f& rval);
 Vector2f operator-(const Vector2f& lval, const Vector2f& rval);
-Vector2f operator*(const Vector2f& lval, const int val);
+Vector2f operator*(const Vector2f& lval, const int scale);
 
 struct Vector2
 {

@@ -12,9 +12,9 @@ Vector2f operator-(const Vector2f& lval, const Vector2f& rval)
 	return Vector2f(lval.x - rval.x, lval.y - rval.y);
 }
 
-Vector2f operator*(const Vector2f& lval, const int val)
+Vector2f operator*(const Vector2f& lval, const int scale)
 {
-	return Vector2f(lval.x * val, lval.y * val);
+	return Vector2f(lval.x * scale, lval.y * scale);
 }
 
 float Vector2f::Magnitude() const

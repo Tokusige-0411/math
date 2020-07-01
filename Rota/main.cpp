@@ -37,7 +37,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			bulPos = centorPos;
 			bulVec = Vector2f(diff.x, diff.y);
 			bulVec.Normalize();
-			bulVec = bulVec * 5;
+			bulVec = bulVec * 5.0f;
 		}
 
 		bulPos = bulPos + bulVec;
