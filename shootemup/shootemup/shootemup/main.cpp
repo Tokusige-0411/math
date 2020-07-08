@@ -2,14 +2,7 @@
 #include<cmath>
 #include"Geometry.h"
 
-#define PI 3.141592
-#define THREEWAY_ANGLE PI / 6
-#define THREE_WAY 3
-
-enum class BulletState
-{
-	THREEWAY,
-};
+#define PI 3.141592f
 
 ///“–‚½‚è”»’èŠÖ”
 ///@param posA A‚ÌÀ•W
@@ -23,7 +16,7 @@ bool IsHit(const Position2& posA, float radiusA, const Position2& posB,  float r
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	ChangeWindowMode(true);
-	SetMainWindowText("’e–‹‚¾‚æ`");
+	SetMainWindowText("1916027_“¿dŒÕ‘å˜N");
 	if (DxLib_Init() != 0) {
 		return -1;
 	}
@@ -62,6 +55,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Position2 playerpos(320, 400);//Ž©‹@À•W
 
 	unsigned int frame = 0;//ƒtƒŒ[ƒ€ŠÇ——p
+	unsigned int bulFrame = 0;
 
 	char keystate[256];
 	bool isDebugMode = false;
@@ -110,19 +104,42 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 
 		//’e”­ŽË
-		if (frame % 12 == 0) {
+		if (frame % 40 == 0) {
 			int count = 0;
 			for (auto& b : bullets) {
 				if (!b.isActive) {
-					b.pos = enemypos;
-					b.vel = playerpos - b.pos;
-					b.vel.Normalize();
-					b.vel *= 5.0f;
-					b.isActive = true;
-					count++;
-					if (count >= 3)
-					{
-						break;
+					if (bulFrame / 300 % 3 == 0) {
+						// Ž©‹@‘_‚¢3way
+						auto v = playerpos - enemypos;
+						float baseAngle = atan2(v.y, v.x);
+						float wayAngle = DX_PI_F / 9;
+						float angle = baseAngle + wayAngle * (float)(count - 1);
+						b.pos = enemypos;
+						b.vel = Vector2(cosf(angle), sinf(angle));
+						b.vel.Normalize();
+						b.vel *= 5.0f;
+						b.isActive = true;
+						count++;
+						if (count >= 3) {
+							break;
+						}
+					}
+					else if (bulFrame / 300 % 3 == 1) {
+						// •úŽËó’e
+						float diffAngle = (DX_PI_F * 2) / 16;
+						float angle = diffAngle * count;
+						b.pos = enemypos;
+						b.vel = Vector2(cosf(angle), sinf(angle));
+						b.vel.Normalize();
+						b.vel *= 5.0f;
+						b.isActive = true;
+						count++;
+						if (count >= 16) {
+							break;
+						}
+					}
+					else if (bulFrame / 300 % 3 == 2) {
+						// ‚Î‚ç‚Ü‚«’e
 					}
 				}
 			}
@@ -170,6 +187,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			DrawCircle(enemypos.x, enemypos.y, 5, 0xffffff, false, 3);
 		}
 		++frame;
+		++bulFrame;
 		ScreenFlip();
 	}
 
