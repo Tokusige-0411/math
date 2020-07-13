@@ -1,8 +1,7 @@
 #include<DxLib.h>
 #include<cmath>
+#include<random>
 #include"Geometry.h"
-
-#define PI 3.141592f
 
 ///ìñÇΩÇËîªíËä÷êî
 ///@param posA AÇÃç¿ïW
@@ -63,6 +62,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	int skyy2 = 0;
 	int bgidx = 0;
 
+	std::mt19937 mt;
+	std::uniform_real_distribution<float> angleRange(-DX_PI / 8, DX_PI / 8);
+
 	while (ProcessMessage() == 0) {
 		ClearDrawScreen();
 
@@ -105,42 +107,53 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		//íeî≠éÀ
 		if (frame % 40 == 0) {
-			int count = 0;
-			for (auto& b : bullets) {
-				if (!b.isActive) {
-					if (bulFrame / 300 % 3 == 0) {
-						// é©ã@ë_Ç¢3way
-						auto v = playerpos - enemypos;
-						float baseAngle = atan2(v.y, v.x);
-						float wayAngle = DX_PI_F / 9;
-						float angle = baseAngle + wayAngle * (float)(count - 1);
-						b.pos = enemypos;
-						b.vel = Vector2(cosf(angle), sinf(angle));
-						b.vel.Normalize();
-						b.vel *= 5.0f;
-						b.isActive = true;
-						count++;
-						if (count >= 3) {
+			if (bulFrame / 300 % 3 == 0) {
+				// é©ã@ë_Ç¢3way
+				auto v = playerpos - enemypos;
+				float baseAngle = atan2(v.y, v.x);
+				float wayAngle = DX_PI_F / 9;
+				for (int i = 0; i < 3; i++) {
+					float angle = baseAngle + wayAngle * (float)(i - 1);
+					for (auto& b : bullets) {
+						if (!b.isActive) {
+							b.pos = enemypos;
+							b.vel = Vector2(cosf(angle), sinf(angle)) * 5.0f;
+							b.isActive = true;
 							break;
 						}
 					}
-					else if (bulFrame / 300 % 3 == 1) {
-						// ï˙éÀèÛíe
-						float diffAngle = (DX_PI_F * 2) / 16;
-						float angle = diffAngle * count;
-						b.pos = enemypos;
-						b.vel = Vector2(cosf(angle), sinf(angle));
-						b.vel.Normalize();
-						b.vel *= 5.0f;
-						b.isActive = true;
-						count++;
-						if (count >= 16) {
+				}
+			}
+			else if (bulFrame / 300 % 3 == 1) {
+				// ägéUíe
+				float diffAngle = (DX_PI_F * 2) / 16;
+				float angle = 0.0f;
+				for (int i = 0; i < 16; i++) {
+					for (auto& b : bullets) {
+						if (!b.isActive) {
+							b.pos = enemypos;
+							b.vel = Vector2(cosf(angle), sinf(angle)) * 5.0f;
+							b.isActive = true;
 							break;
 						}
 					}
-					else if (bulFrame / 300 % 3 == 2) {
-						// ÇŒÇÁÇ‹Ç´íe
+					angle += diffAngle;
+				}
+			}
+			else if (bulFrame / 300 % 3 == 2) {
+				// ÇŒÇÁÇ‹Ç´íe
+				float diffAngle = (DX_PI_F * 2) / 16;
+				float angle = 0.0f;
+				for (int i = 0; i < 16; i++) {
+					for (auto& b : bullets) {
+						if (!b.isActive) {
+							b.pos = enemypos;
+							b.vel = Vector2(cosf(angle), sinf(angle)) * 5.0f;
+							b.isActive = true;
+							break;
+						}
 					}
+					angle += diffAngle + angleRange(mt);
 				}
 			}
 		}
