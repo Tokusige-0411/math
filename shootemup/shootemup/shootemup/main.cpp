@@ -106,7 +106,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 
 		//’e”­ŽË
-		if (frame % 40 == 0) {
+		if (frame % 20 == 0) {
 			if (bulFrame / 300 % 3 == 0) {
 				// Ž©‹@‘_‚¢3way
 				auto v = playerpos - enemypos;
@@ -142,9 +142,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			}
 			else if (bulFrame / 300 % 3 == 2) {
 				// ‚Î‚ç‚Ü‚«’e
-				float diffAngle = (DX_PI_F * 2) / 16;
+				float diffAngle = (DX_PI_F * 2) / 24;
 				float angle = 0.0f;
-				for (int i = 0; i < 16; i++) {
+				for (int i = 0; i < 24; i++) {
 					for (auto& b : bullets) {
 						if (!b.isActive) {
 							b.pos = enemypos;

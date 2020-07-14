@@ -11,15 +11,11 @@ Position2 RotatePosition(const Position2& center, float angle, Position2 pos) {
 	//①中心を原点に平行移動して
 	//②原点中心に回転して
 	//③中心を元の座標へ戻す
-	Position2 ret;
 
-	pos -= center;
-
-	ret.x = pos.x * cosf(angle) - pos.y * sinf(angle);
-	ret.y = pos.x * sinf(angle) + pos.y * cosf(angle);
-
-	ret += center;
-	return ret;//デフォルトはそのまま返してます。
+	Matrix mat = MultipleMat(TranslateMat(center.x, center.y),
+							MultipleMat(RotateMat(angle),
+								TranslateMat(-center.x, -center.y)));
+	return MultipleVec(mat, pos);
 	//これを書き換えて、特定の点を中心に回転を行うようにしてください。
 }
 
@@ -27,6 +23,7 @@ int WINAPI WinMain(HINSTANCE , HINSTANCE, LPSTR,int) {
 	ChangeWindowMode(true);
 	DxLib_Init();
 	SetDrawScreen(DX_SCREEN_BACK);
+
 
 	Position2 positions[4] = {
 		{100,100},//左上
@@ -59,7 +56,7 @@ int WINAPI WinMain(HINSTANCE , HINSTANCE, LPSTR,int) {
 			pos = RotatePosition(Position2(mx, my), angle, pos);
 		}
 
-		DrawQuadrangle(
+		DrawQuadrangleAA(
 			positions[0].x,positions[0].y,
 			positions[1].x, positions[1].y,
 			positions[2].x, positions[2].y, 
