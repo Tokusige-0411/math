@@ -10,7 +10,8 @@
 ///@param radiusB BÇÃîºåa
 bool IsHit(const Position2& posA, float radiusA, const Position2& posB,  float radiusB) {
 	//ìñÇΩÇËîªíËÇé¿ëïÇµÇƒÇ≠ÇæÇ≥Ç¢
-	return false;
+	Vector2 vec = { posA.x - posB.x, posA.y - posB.y };
+	return (radiusA + radiusB) > vec.Magnitude();
 }
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -19,7 +20,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	if (DxLib_Init() != 0) {
 		return -1;
 	}
-	SetDrawScreen(DX_SCREEN_BACK);
 
 	//îwåióp
 	int bgH[4];
@@ -39,6 +39,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Position2 pos;//ç¿ïW
 		Vector2 vel;//ë¨ìx
 		bool isActive = false;//ê∂Ç´ÇƒÇÈÇ©Å`ÅH
+		bool state = false;// ìríÜÇ≈ïœÇÌÇÈÇ©Ç«Ç§Ç©
+		int count = 0;
 	};
 
 	//íeÇÃîºåa
@@ -64,8 +66,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	std::mt19937 mt;
 	std::uniform_real_distribution<float> angleRange(-DX_PI / 8, DX_PI / 8);
+	std::uniform_real_distribution<float> angleRange2(-DX_PI / 6, DX_PI / 6);
+	std::uniform_real_distribution<float> vecRange(2.0f, 6.0f);
+
+	int shakeScreen = MakeScreen(DEFAULT_SCREEN_SIZE_X, DEFAULT_SCREEN_SIZE_Y, true);
+	int shakeCount = 0;
+	Vector2 shakePos = { 0, 0 };
+	std::uniform_real_distribution<float> shakeRange(-5, 5);
+
 
 	while (ProcessMessage() == 0) {
+		SetDrawScreen(shakeScreen);
 		ClearDrawScreen();
 
 		GetHitKeyStateAll(keystate);
@@ -106,8 +117,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 
 		//íeî≠éÀ
-		if (frame % 20 == 0) {
-			if (bulFrame / 300 % 3 == 0) {
+		if (frame % 25 == 0) {
+			if (bulFrame / 300 % 5 == 0) {
 				// é©ã@ë_Ç¢3way
 				auto v = playerpos - enemypos;
 				float baseAngle = atan2(v.y, v.x);
@@ -124,7 +135,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 					}
 				}
 			}
-			else if (bulFrame / 300 % 3 == 1) {
+			else if (bulFrame / 300 % 5 == 1) {
 				// ägéUíe
 				float diffAngle = (DX_PI_F * 2) / 16;
 				float angle = 0.0f;
@@ -140,7 +151,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 					angle += diffAngle;
 				}
 			}
-			else if (bulFrame / 300 % 3 == 2) {
+			else if (bulFrame / 300 % 5 == 2) {
 				// ÇŒÇÁÇ‹Ç´íe
 				float diffAngle = (DX_PI_F * 2) / 24;
 				float angle = 0.0f;
@@ -148,7 +159,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 					for (auto& b : bullets) {
 						if (!b.isActive) {
 							b.pos = enemypos;
-							b.vel = Vector2(cosf(angle), sinf(angle)) * 5.0f;
+							b.vel = Vector2(cosf(angle), sinf(angle)) * vecRange(mt);
 							b.isActive = true;
 							break;
 						}
@@ -156,13 +167,60 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 					angle += diffAngle + angleRange(mt);
 				}
 			}
+			else if (bulFrame / 300 % 5 == 3) {
+				// ägéUíe2
+				float diffAngle = (DX_PI_F * 2) / 16;
+				float angle = (diffAngle / 2) * (frame / 25 % 2);
+				for (int i = 0; i < 16; i++) {
+					for (auto& b : bullets) {
+						if (!b.isActive) {
+							b.pos = enemypos;
+							b.vel = Vector2(cosf(angle), sinf(angle)) * 4.0f;
+							b.isActive = true;
+							break;
+						}
+					}
+					angle += diffAngle;
+				}
+			}
+			else if (bulFrame / 300 % 5 == 4) {
+				// ägéUíe2
+				auto v = playerpos - enemypos;
+				float angle = atan2(v.y, v.x) + angleRange2(mt);
+				for (int i = 0; i < 16; i++) {
+					for (auto& b : bullets) {
+						if (!b.isActive) {
+							b.pos = enemypos;
+							b.vel = Vector2(cosf(angle), sinf(angle)) * 3.0f;
+							b.count = 0;
+							b.isActive = true;
+							b.state = true;
+							break;
+						}
+					}
+				}
+			}
 		}
 
+		float diffAngle = (DX_PI_F * 2) / 16;
+		float angle = 0.0f;
 		//íeÇÃçXêVÇ®ÇÊÇ—ï\é¶
 		for (auto& b : bullets) {
 			if (!b.isActive) {
 				continue;
 			}
+
+			// ìríÜÇ≈ïœçXÇ≥ÇÍÇÈíeñãÇÃçXêV
+			if (b.state)
+			{
+				if (b.count >= 60)
+				{
+					b.state = false;
+					b.vel = Vector2(cosf(angle), sinf(angle)) * 5.0f;
+					angle += diffAngle;
+				}
+			}
+			b.count++;
 
 			//íeÇÃåªç›ç¿ïWÇ…íeÇÃåªç›ë¨ìxÇâ¡éZÇµÇƒÇ≠ÇæÇ≥Ç¢
 			b.pos += b.vel;
@@ -187,7 +245,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			//Å´ÇÃIsHitÇÕé¿ëïÇèëÇ¢ÇƒÇ‹ÇπÇÒÅBé©ï™Ç≈èëÇ¢ÇƒÇ≠ÇæÇ≥Ç¢ÅB
 			if (IsHit(b.pos, bulletRadius, playerpos, playerRadius)) {
 				//ìñÇΩÇ¡ÇΩîΩâûÇèëÇ¢ÇƒÇ≠ÇæÇ≥Ç¢ÅB
+				b.isActive = false;
+				shakeCount = 3;
 			}
+		}
+
+		// âÊñ º™≤∏
+		if (shakeCount > 0)
+		{
+			shakePos = { shakeRange(mt), shakeRange(mt) };
+			shakeCount--;
+		}
+		else
+		{
+			shakePos = { 0, 0 };
 		}
 
 		//ìGÇÃï\é¶
@@ -199,6 +270,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			//ìGÇÃñ{ëÃ(ìñÇΩÇËîªíË)
 			DrawCircle(enemypos.x, enemypos.y, 5, 0xffffff, false, 3);
 		}
+
+		SetDrawScreen(DX_SCREEN_BACK);
+		ClearDrawScreen();
+		DrawGraph(shakePos.x, shakePos.y, shakeScreen, true);
+
 		++frame;
 		++bulFrame;
 		ScreenFlip();
