@@ -100,6 +100,17 @@ Vector2::operator-=(const Vector2& v) {
 Matrix 
 MultipleMat(const Matrix& lmat, const Matrix& rmat) {
 	Matrix ret = {};
+
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			for (int z = 0; z < 3; z++)
+			{
+				ret.m[i][j] += lmat.m[i][z] * rmat.m[z][j];
+			}
+		}
+	}
 	return ret;
 
 }
@@ -110,13 +121,19 @@ MultipleMat(const Matrix& lmat, const Matrix& rmat) {
 Vector2 
 MultipleVec(const Matrix& mat, const Vector2& vec) {
 	Vector2 ret = {};
+	ret.x = mat.m[0][0] * vec.x + mat.m[0][1] * vec.y + mat.m[0][2];
+	ret.y = mat.m[1][0] * vec.x + mat.m[1][1] * vec.y + mat.m[1][2];
 	return ret;
 }
 
 
 ///’PˆÊs—ñ‚ð•Ô‚·
 Matrix IdentityMat() {
-	Matrix ret = {};
+	Matrix ret = {
+		1, 0, 0,
+		0, 1, 0,
+		0, 0, 1
+	};
 	return ret;
 }
 
@@ -124,13 +141,23 @@ Matrix IdentityMat() {
 ///@param x X•ûŒü•½sˆÚ“®—Ê
 ///@param y Y•ûŒü•½sˆÚ“®—Ê
 Matrix TranslateMat(float x, float y) {
-	Matrix ret = {};
+	// Matrix ret = IdentityMat();
+	Matrix ret = {
+		1, 0, x,
+		0, 1, y,
+		0, 0, 1
+	};	
 	return ret;
 }
 
 ///‰ñ“]s—ñ‚ð•Ô‚·
 ///@param angle ‰ñ“]Šp“x
 Matrix RotateMat(float angle) {
-	Matrix ret = {};
+	// Matrix ret = IdentityMat();
+	Matrix ret = {
+		cosf(angle), -sinf(angle), 0,
+		sinf(angle), cosf(angle),  0,
+		0, 0, 1
+	};
 	return ret;
 }
