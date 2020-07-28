@@ -2,7 +2,6 @@
 #include<cmath>
 #include"Geometry.h"
 
-
 using namespace std;
 
 void DrawWood(const Capsule& cap, int handle) {
@@ -32,18 +31,32 @@ Matrix RotatePosition(const Position2& center, float angle) {
 	//③中心を元の座標へ戻す
 
 	Matrix mat = IdentityMat();
+	mat = MultipleMat(TranslateMat(center.x, center.y),
+		MultipleMat(RotateMat(angle), TranslateMat(-center.x, -center.y)));
 	return mat;
 	//これを書き換えて、特定の点を中心に回転を行うようにしてください。
 }
 
+float Clamp(float vlate, float maxval = 1.0f, float minval = 0.0f) {
+	return min(max(vlate, minval), maxval);
+}
+
 //カプセルと円が当たったか？
 bool IsHit(const Capsule& cap, const Circle& cc) {
-	return false;
+	auto vp = cap.posA - cc.pos;
+	auto v = cap.posA - cap.posB;
+	auto dot = Dot(vp, v);
+	auto vlate = dot / (v.Magnitude() * v.Magnitude());
+	vlate = Clamp(vlate);
+	v *= vlate;
+	auto vq = vp - v;
+	return (vq.Magnitude() <= (cap.radius + cc.radius));
 }
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	ChangeWindowMode(true);
 	SetGraphMode(512, 800, 32);
+	SetMainWindowText("1916027_徳重虎大朗");
 	DxLib_Init();
 	SetDrawScreen(DX_SCREEN_BACK);
 
@@ -57,8 +70,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	auto cascadeH = LoadGraph("img/cascade_chip.png");
 	auto chipH = LoadGraph("img/atlas0.png");
+	auto rockH = LoadGraph("img/rock.png");
 
 	Capsule cap(20,Position2((sw-wdW)/2,sh-100),Position2((sw - wdW) / 2+wdW,sh-100));
+	bool plAlive = true;
+
+	auto rockC = Circle(12.0f, {200.0f, 10.0f});
+	bool rockAlive = true;
+	
 
 	char keystate[256];
 	
@@ -71,6 +90,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		GetHitKeyStateAll(keystate);
 
 		DrawBox(0, 0, sw, sh, 0xaaffff, true);
+
+		rockC.pos.y++;
 
 		int mx = 0, my = 0;
 
@@ -103,9 +124,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 
 		//当たり判定を完成させて当たったときの反応を書いてください
-		//if(IsHit(cap,circle)){
-		//	反応をここに書いてください。
-		//}
+		if(IsHit(cap,rockC)){
+			
+		}
 
 		//カプセル回転
 		Matrix rotMat=RotatePosition(Position2(mx, my), angle);
@@ -143,6 +164,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 		DrawWood(cap, woodH);
+		DrawRotaGraph(rockC.pos.x, rockC.pos.y, 1.0, 0.0, rockH, true);
+
 		DrawCircle(mx, my, 30, 0xff0000, false, 3);
 		++frame;
 		
