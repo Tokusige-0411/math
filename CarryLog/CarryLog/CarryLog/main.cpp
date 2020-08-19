@@ -1,8 +1,16 @@
 #include<DxLib.h>
 #include<cmath>
+#include<random>
 #include"Geometry.h"
 
 using namespace std;
+
+struct Rock {
+	Circle circle;
+	float angle;
+	float speed;
+	bool alive;
+};
 
 void DrawWood(const Capsule& cap, int handle) {
 
@@ -72,12 +80,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	auto chipH = LoadGraph("img/atlas0.png");
 	auto rockH = LoadGraph("img/rock.png");
 
-	Capsule cap(20,Position2((sw-wdW)/2,sh-100),Position2((sw - wdW) / 2+wdW,sh-100));
+ 	Capsule cap(20,Position2((sw-wdW)/2,sh-100),Position2((sw - wdW) / 2+wdW,sh-100));
 	bool plAlive = true;
+	int playerLH = LoadGraph("img/mario.png");
+	int playerRH = LoadGraph("img/luigi.png");
+	float plFallSpeed = 0.2f;
 
-	auto rockC = Circle(12.0f, {200.0f, 10.0f});
-	bool rockAlive = true;
+	Rock rocks[5];
+	for (int i = 0; i < 5; i++)
+	{
+		rocks[i].alive = false;
+		rocks[i].circle.radius = 12.0f;
+	}
+	std::mt19937 mt;
+	std::uniform_real_distribution<float> rockPosRange(42.0f, static_cast<float>(sw - 42));
+	std::uniform_real_distribution<float> rockSpeedRange(1.0f, 3.0f);
 	
+	int blastH[12];
+	LoadDivGraph("img/explosion.png", 12, 12, 1, 128, 128, blastH);
+	int blastCnt = 0;
+	int blastFlag = false;
+	Vector2 blastPos = { 0.0f, 0.0f };
 
 	char keystate[256];
 	
@@ -85,53 +108,134 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	int frame = 0;
 	bool isLeft = false;
+
+	float wallL = 32.0f;
+	float wallR = sw - 32.0f;
+
+	int clearH = LoadGraph("img/clear.png");
+	float clearLine = 32.0;
+	bool clearFlag = false;
+
+
 	while (ProcessMessage() == 0) {
 		ClearDrawScreen();
 		GetHitKeyStateAll(keystate);
 
 		DrawBox(0, 0, sw, sh, 0xaaffff, true);
 
-		rockC.pos.y++;
+		if (frame %  300 == 0)
+		{
+			for (int i = 0; i < 5; i++)
+			{
+				if (!rocks[i].alive)
+				{
+					rocks[i].alive = true;
+					rocks[i].circle.pos = { rockPosRange(mt), 0.0f };
+					rocks[i].speed = rockSpeedRange(mt);
+					rocks[i].angle = 0.0f;
+					break;
+				}
+			}
+		}
+
+		for (int i = 0; i < 5; i++)
+		{
+			if (rocks[i].alive)
+			{
+				rocks[i].circle.pos.y += rocks[i].speed;
+				rocks[i].angle += 0.01f;
+			}
+		}
 
 		int mx = 0, my = 0;
 
-		if (keystate[KEY_INPUT_LEFT]) {
-			isLeft = true;
+		if (clearFlag)
+		{
+			if (keystate[KEY_INPUT_SPACE])
+			{
+				clearFlag = false;
+				angle = 0.0f;
+				cap.posA = { static_cast<float>((sw - wdW) / 2), static_cast<float>(sh - 100) };
+				cap.posB = { static_cast<float>((sw - wdW) / 2 + wdW), static_cast<float>(sh - 100) };
+			}
 		}
-		else if (keystate[KEY_INPUT_RIGHT]) {
-			isLeft = false;
-		}
+		else
+		{
+			// ¸Ø±”»’è
+			if ((cap.posA.y < clearLine) && (cap.posB.y < clearLine))
+			{
+				clearFlag = true;		
+				for (int i = 0; i < 5; i++)
+				{
+					rocks[i].alive = false;
+				}
+			}
 
-		if (isLeft) {
-			mx = cap.posA.x;
-			my = cap.posA.y;
-		}
-		else {
-			mx = cap.posB.x;
-			my = cap.posB.y;
-		}
+			if (plAlive)
+			{
+				cap.posA.y += plFallSpeed;
+				cap.posB.y += plFallSpeed;
 
-		if (keystate[KEY_INPUT_Z]) {
+				if (keystate[KEY_INPUT_LEFT]) {
+					isLeft = true;
+				}
+				else if (keystate[KEY_INPUT_RIGHT]) {
+					isLeft = false;
+				}
+				if (isLeft) {
+					mx = cap.posA.x;
+					my = cap.posA.y;
+				}
+				else {
+					mx = cap.posB.x;
+					my = cap.posB.y;
+				}
+				if (keystate[KEY_INPUT_Z]) {
 
-			angle = -0.05f;
-		}
-		else if (keystate[KEY_INPUT_X]) {
+					angle = -0.05f;
+				}
+				else if (keystate[KEY_INPUT_X]) {
 
-			angle = 0.05f;
-		}
-		else {
-			angle = 0.0f;
-		}
+					angle = 0.05f;
+				}
+				else {
+					angle = 0.0f;
+				}
 
-		//“–‚½‚è”»’è‚ðŠ®¬‚³‚¹‚Ä“–‚½‚Á‚½‚Æ‚«‚Ì”½‰ž‚ð‘‚¢‚Ä‚­‚¾‚³‚¢
-		if(IsHit(cap,rockC)){
-			
-		}
+				// Ž€–S”»’è‚ð‚±‚±‚É‘‚¢‚Ä‚¢‚­
+				// “–‚½‚è”»’è‚ðŠ®¬‚³‚¹‚Ä“–‚½‚Á‚½‚Æ‚«‚Ì”½‰ž‚ð‘‚¢‚Ä‚­‚¾‚³‚¢
+				for (int i = 0; i < 5; i++)
+				{
+					if (rocks[i].alive)
+					{
+						if (IsHit(cap, rocks[i].circle)) {
+							rocks[i].alive = false;
+							plAlive = false;
+							blastFlag = true;
+							blastPos = { (cap.posA.x + cap.posB.x) / 2, (cap.posA.y + cap.posB.y) / 2 };
+						}
+					}
+				}
+				// 180“xˆÈã
+				if (cap.posB.x < cap.posA.x)
+				{
+					plAlive = false;
+				}
+				// •Ç‚É“–‚½‚é
+				if (cap.posA.x < wallL ||
+					cap.posB.x > wallR ||
+					(cap.posA.y > sh && cap.posB.y > sh))
+				{
+					plAlive = false;
+				}
+				
 
-		//ƒJƒvƒZƒ‹‰ñ“]
-		Matrix rotMat=RotatePosition(Position2(mx, my), angle);
-		cap.posA = MultipleVec(rotMat, cap.posA);
-		cap.posB = MultipleVec(rotMat, cap.posB);
+				//ƒJƒvƒZƒ‹‰ñ“]
+				Matrix rotMat = RotatePosition(Position2(mx, my), angle);
+				cap.posA = MultipleVec(rotMat, cap.posA);
+				cap.posB = MultipleVec(rotMat, cap.posB);
+			}
+		}
 
 		//”wŒi‚Ì•`‰æ
 		//‘ê
@@ -162,11 +266,56 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			destY += dest_chip_size;
 		}
 
+		// ÌßÚ²Ô°‚Ì•`‰æ‚ÆŽ€–S‰‰o‚ÆŽ€–Sˆ—
+		if (plAlive)
+		{
+			DrawWood(cap, woodH);
+			if(!clearFlag)
+			{
+				DrawCircle(mx, my, 30, 0xff0000, false, 3);
+			}
+		}
+		else
+		{
+			// ”š”­ˆ—
+			if (blastFlag)
+			{
+				DrawRotaGraph(blastPos.x, blastPos.y, 1.0, 0.0, blastH[blastCnt / 2], true);
+				blastCnt++;
+				if (blastCnt >= 24)
+				{
+					blastFlag = false;
+					blastCnt = 0;
+				}
+			}
+			DrawRotaGraph(cap.posA.x, cap.posA.y, 1.8, 0.0, playerLH, true);
+			DrawRotaGraph(cap.posB.x, cap.posB.y, 1.8, 0.0, playerRH, true);
+			cap.posA.y += plFallSpeed;
+			cap.posB.y += plFallSpeed;
+			plFallSpeed += 0.5f;
+			if ((cap.posA.y + 30.0f > sh) && (cap.posB.y + 30.0f > sh))
+			{
+				plAlive = true;
+				angle = 0.0f;
+				cap.posA = { static_cast<float>((sw - wdW) / 2), static_cast<float>(sh - 100) };
+				cap.posB = { static_cast<float>((sw - wdW) / 2 + wdW), static_cast<float>(sh - 100) };
+				plFallSpeed = 0.2f;
+			}
+		}
 
-		DrawWood(cap, woodH);
-		DrawRotaGraph(rockC.pos.x, rockC.pos.y, 1.0, 0.0, rockH, true);
+		for (int i = 0; i < 5; i++)
+		{
+			if (rocks[i].alive)
+			{
+				DrawRotaGraph(rocks[i].circle.pos.x, rocks[i].circle.pos.y, 1.0, rocks[i].angle, rockH, true);
+			}
+		}
 
-		DrawCircle(mx, my, 30, 0xff0000, false, 3);
+		if (clearFlag)
+		{
+			DrawRotaGraph(sw / 2, sh / 2, 1.0, 0.0, clearH, true);
+		}
+
 		++frame;
 		
 		ScreenFlip();
