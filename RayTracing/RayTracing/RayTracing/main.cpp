@@ -18,10 +18,10 @@ bool IsHitRayAndObject(const Position3& eye,const Vector3& ray,const Sphere& sp)
 	Vector3 centerVec = sp.pos - eye;
 	//
 	//中心から視線への内積をとります＝＞ベクトル長
+	auto dot = Dot(centerVec, ray);
 	//視線ベクトルとベクトル長をかけて、中心からの垂線下した点を求めます
-	auto dot = Dot(ray, centerVec);
-
-	return (dot < sp.radius);
+	auto a = ray * dot;
+	return ((centerVec - a).Magnitude() <= sp.radius);
 }
 
 ///レイトレーシング
@@ -35,7 +35,7 @@ void RayTracing(const Position3& eye,const Sphere& sphere) {
 		for (int x = 0; x < screen_width; ++x) {//スクリーン横方向
 			//①視点とスクリーン座標から視線ベクトルを作る
 			screenPos = { static_cast<float>(x), static_cast<float>(y), 0.0f };
-			ray = eye - screenPos;
+			ray = screenPos - eye;
 			//②正規化しとく
 			ray.Normalize();
 			//③IsHitRay関数がTrueだったら白く塗りつぶす
@@ -54,7 +54,7 @@ int WINAPI WinMain(HINSTANCE , HINSTANCE,LPSTR,int ) {
 	SetMainWindowText(_T("簡易版のレイトレでっせ"));
 	DxLib_Init();
 
-	RayTracing(Vector3(0, 0, 300), Sphere(100, Position3(0, 0, -100)));
+	RayTracing(Vector3(screen_width / 2, screen_height / 2, 300), Sphere(100, Position3(screen_width / 2, screen_height / 2, -100)));
 
 	WaitKey();
 	DxLib_End();
