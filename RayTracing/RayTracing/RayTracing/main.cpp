@@ -12,7 +12,7 @@ const int screen_height = 480;
 ///@param ray (視点からスクリーンピクセルへのベクトル)
 ///@param sphere 球
 ///@hint レイは正規化しといたほうが使いやすいだろう
-bool IsHitRayAndObject(const Position3& eye,const Vector3& ray,const Sphere& sp ,float& t) {
+bool IsHitRayAndObject(const Position3& eye,const Vector3& ray,const Vector3& light,const Sphere& sp,float& t) {
 	//レイが正規化済みである前提で…
 	//
 	//視点から球体中心へのベクトル(視線)を作ります
@@ -28,13 +28,20 @@ bool IsHitRayAndObject(const Position3& eye,const Vector3& ray,const Sphere& sp 
 		// 表面の交点tを求める
 		auto w = sqrt((sp.radius * sp.radius) - (V.Magnitude() * V.Magnitude()));
 		t = dot - w;
-		// 交点tへの法線ベクトルを求める
+		// 交点tの法線ベクトルを求める
+
 		return true;
 	}
 	else
 	{
 		return false;
 	}
+}
+
+// 最大値最小値を求める
+float Clamp(float in, const float maxValue = 1.0f, const float minValue = 0.0f)
+{
+	return max(min(maxValue, in), minValue);
 }
 
 ///レイトレーシング
@@ -56,9 +63,15 @@ void RayTracing(const Position3& eye,const Sphere& sphere, const Position3& ligh
 			ray.Normalize();
 			float t = 0;
 			//③IsHitRay関数がTrueだったら白く塗りつぶす
-			if (IsHitRayAndObject(eye, ray, sphere, t))
+			if (IsHitRayAndObject(eye, ray, lightVec, sphere, t))
 			{
-				auto d = (400.0f - t) / 100.0f;
+				// tから交点Pを求める
+				auto p = eye + (ray * t);
+				// 球体の中心から交点Pへの法線ベクトルを求める
+				auto n = (p - sphere.pos).Normalized();
+				// 法線ベクトルと交戦ベクトルの内積を求め明るさとして扱う
+				auto d = Dot(lightVec, n);
+				d = Clamp(d);
 				DrawPixel(x, y, GetColor(255 * d, 255 * d, 255 * d));
 			}
 			//※塗りつぶしはDrawPixelという関数を使う。
@@ -74,8 +87,13 @@ int WINAPI WinMain(HINSTANCE , HINSTANCE,LPSTR,int ) {
 
 	auto eye = Vector3(0, 0, 300);
 	auto sphere = Sphere(100, Position3(0, 0, -100));
-	auto light = Vector3(100, 100, 200);
-	RayTracing(eye, sphere, light);
+	auto light = Vector3(100, 500, 200);
+	while (ProcessMessage() != -1)
+	{
+		ClsDrawScreen();
+		RayTracing(eye, sphere, light);
+		ScreenFlip();
+	}
 
 	WaitKey();
 	DxLib_End();
