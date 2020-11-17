@@ -4,6 +4,16 @@
 const int screen_width = 640;
 const int screen_height = 480;
 
+// 反射ベクトルを返す
+Vector3 ReflectVector(const Vector3& invec, const Vector3& normal)
+{
+	// 反射ベクトルの式
+	// R = I - 2*(N・I)N
+	auto dot = Dot(normal, invec);
+	return (invec - normal * (2 * dot));
+}
+
+
 //ヒントになると思って、色々と関数を用意しておりますが
 //別にこの関数を使わなければいけないわけでも、これに沿わなければいけないわけでも
 //ありません。レイトレーシングができていれば構いません。
@@ -28,8 +38,6 @@ bool IsHitRayAndObject(const Position3& eye,const Vector3& ray,const Vector3& li
 		// 表面の交点tを求める
 		auto w = sqrt((sp.radius * sp.radius) - (V.Magnitude() * V.Magnitude()));
 		t = dot - w;
-		// 交点tの法線ベクトルを求める
-
 		return true;
 	}
 	else
@@ -69,10 +77,20 @@ void RayTracing(const Position3& eye,const Sphere& sphere, const Position3& ligh
 				auto p = eye + (ray * t);
 				// 球体の中心から交点Pへの法線ベクトルを求める
 				auto n = (p - sphere.pos).Normalized();
-				// 法線ベクトルと交戦ベクトルの内積を求め明るさとして扱う
-				auto d = Dot(lightVec, n);
-				d = Clamp(d);
-				DrawPixel(x, y, GetColor(255 * d, 255 * d, 255 * d));
+
+				// 法線ベクトルと光線ベクトルの内積を求め明るさとして扱う
+				auto diffuse = Dot(lightVec, n);
+				diffuse = Clamp(diffuse);
+
+
+				// ライト反射ベクトル
+				auto r = ReflectVector(lightVec, n);
+				// ライト反射ベクトルと視線逆ベクトルの内積を取りpow関数でn乗する
+				auto specular = pow(Clamp(Dot(r, -ray)), 6);
+
+				auto b = (diffuse + Clamp(specular));
+
+				DrawPixel(x, y, GetColor(255 * b, 255 * b, 255 * b));
 			}
 			//※塗りつぶしはDrawPixelという関数を使う。
 		}
@@ -87,7 +105,7 @@ int WINAPI WinMain(HINSTANCE , HINSTANCE,LPSTR,int ) {
 
 	auto eye = Vector3(0, 0, 300);
 	auto sphere = Sphere(100, Position3(0, 0, -100));
-	auto light = Vector3(100, 500, 200);
+	auto light = Vector3(-100, 200, 200);
 	while (ProcessMessage() != -1)
 	{
 		ClsDrawScreen();
