@@ -9,8 +9,7 @@ Vector3 ReflectVector(const Vector3& invec, const Vector3& normal)
 {
 	// 反射ベクトルの式
 	// R = I - 2*(N・I)N
-	auto dot = Dot(normal, invec);
-	return (invec - normal * (2 * dot));
+	return (invec - normal * (2 * Dot(normal, invec)));
 }
 
 
@@ -60,7 +59,7 @@ void RayTracing(const Position3& eye,const Sphere& sphere, const Position3& ligh
 	Position3 screenPos;
 	Vector3 ray;
 	// 光源から球へのベクトル
-	Vector3 lightVec = light - sphere.pos;
+	Vector3 lightVec = sphere.pos - light;
 	lightVec.Normalize();
 	for (int y = 0; y < screen_height; ++y) {//スクリーン縦方向
 		for (int x = 0; x < screen_width; ++x) {//スクリーン横方向
@@ -79,16 +78,15 @@ void RayTracing(const Position3& eye,const Sphere& sphere, const Position3& ligh
 				auto n = (p - sphere.pos).Normalized();
 
 				// 法線ベクトルと光線ベクトルの内積を求め明るさとして扱う
-				auto diffuse = Dot(lightVec, n);
+				auto diffuse = Dot(-lightVec, n);
 				diffuse = Clamp(diffuse);
-
 
 				// ライト反射ベクトル
 				auto r = ReflectVector(lightVec, n);
 				// ライト反射ベクトルと視線逆ベクトルの内積を取りpow関数でn乗する
-				auto specular = pow(Clamp(Dot(r, -ray)), 6);
+				auto specular = pow(Clamp(Dot(r, -ray)), 20);
 
-				auto b = (diffuse + Clamp(specular));
+				auto b = Clamp(diffuse + specular);
 
 				DrawPixel(x, y, GetColor(255 * b, 255 * b, 255 * b));
 			}
