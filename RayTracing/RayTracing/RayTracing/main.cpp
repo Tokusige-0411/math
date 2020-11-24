@@ -1,8 +1,10 @@
 #include<DxLib.h>
 #include<cmath>
+#include<iostream>
 #include"Geometry.h"
 const int screen_width = 640;
 const int screen_height = 480;
+const float albedo[3] = { 1.0f, 0.7f, 0.7f };
 
 // 反射ベクトルを返す
 Vector3 ReflectVector(const Vector3& invec, const Vector3& normal)
@@ -16,6 +18,24 @@ Vector3 ReflectVector(const Vector3& invec, const Vector3& normal)
 //ヒントになると思って、色々と関数を用意しておりますが
 //別にこの関数を使わなければいけないわけでも、これに沿わなければいけないわけでも
 //ありません。レイトレーシングができていれば構いません。
+
+using Color = Vector3;
+
+// 最大値最小値を求める
+float Clamp(float in, const float maxValue = 1.0f, const float minValue = 0.0f)
+{
+	return max(min(maxValue, in), minValue);
+}
+
+Color Clamp(const Color& value, const float maxValue = 255.0f, const float minValue = 0.0f)
+{
+	return Color(Clamp(value.x, maxValue, minValue), Clamp(value.y, maxValue, minValue), Clamp(value.z, maxValue, minValue));
+}
+
+UINT32 GetUint32ColorFromVectorColor(const Color& col)
+{
+	return GetColor(col.x, col.y, col.z);
+}
 
 ///レイ(光線)と球体の当たり判定
 ///@param ray (視点からスクリーンピクセルへのベクトル)
@@ -45,12 +65,6 @@ bool IsHitRayAndObject(const Position3& eye,const Vector3& ray,const Vector3& li
 	}
 }
 
-// 最大値最小値を求める
-float Clamp(float in, const float maxValue = 1.0f, const float minValue = 0.0f)
-{
-	return max(min(maxValue, in), minValue);
-}
-
 ///レイトレーシング
 ///@param eye 視点座標
 ///@param sphere 球オブジェクト(そのうち複数にする)
@@ -63,6 +77,7 @@ void RayTracing(const Position3& eye,const Sphere& sphere, const Position3& ligh
 	lightVec.Normalize();
 	for (int y = 0; y < screen_height; ++y) {//スクリーン縦方向
 		for (int x = 0; x < screen_width; ++x) {//スクリーン横方向
+
 			//①視点とスクリーン座標から視線ベクトルを作る
 			screenPos = { static_cast<float>(x - (screen_width / 2)), static_cast<float>((screen_height / 2) - y), 0.0f };
 			ray = screenPos - eye;
@@ -78,19 +93,35 @@ void RayTracing(const Position3& eye,const Sphere& sphere, const Position3& ligh
 				auto n = (p - sphere.pos).Normalized();
 
 				// 法線ベクトルと光線ベクトルの内積を求め明るさとして扱う
-				auto diffuse = Dot(-lightVec, n);
-				diffuse = Clamp(diffuse);
+				auto diffuseB = Dot(-lightVec, n);
+				diffuseB = Clamp(diffuseB);
+
 
 				// ライト反射ベクトル
 				auto r = ReflectVector(lightVec, n);
 				// ライト反射ベクトルと視線逆ベクトルの内積を取りpow関数でn乗する
 				auto specular = pow(Clamp(Dot(r, -ray)), 20);
 
-				auto b = Clamp(diffuse + specular);
+				Color difColor(255, 128, 128);
+				Color specColor(255, 255, 255);
 
-				DrawPixel(x, y, GetColor(255 * b, 255 * b, 255 * b));
+				difColor *= diffuseB;
+				specColor *= specular;
+
+				DrawPixel(x, y, GetUint32ColorFromVectorColor(Clamp(difColor + specColor)));
 			}
-			//※塗りつぶしはDrawPixelという関数を使う。
+			else
+			{
+				// 仮に平法線ベクトルを(0, 1, 0)とする
+				// 平面に当たる条件は視線と法線ベクトルが90度以上
+				//※塗りつぶしはDrawPixelという関数を使う。
+				auto n = Vector3(1.0f, 1.0f, 0.0f);
+				auto d = Dot(n, ray);
+				if (d < 0)
+				{
+					DrawPixel(x, y, GetColor(255, 255, 255));
+				}
+			}
 		}
 	}
 }

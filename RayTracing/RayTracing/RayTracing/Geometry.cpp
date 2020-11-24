@@ -103,6 +103,11 @@ Vector3::operator*(float scale)const {
 	return Vector3(x*scale, y*scale,z*scale);
 }
 
+Vector3 Vector3::operator*(Vector3 v) const
+{
+	return Vector3(x * v.x, y * v.y, z * v.z);
+}
+
 Vector3 operator+(const Vector3& va, const Vector3 vb) {
 	return Vector3(va.x + vb.x, va.y + vb.y,va.z+vb.z);
 }
