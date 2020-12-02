@@ -115,11 +115,33 @@ void RayTracing(const Position3& eye,const Sphere& sphere, const Position3& ligh
 				// 仮に平法線ベクトルを(0, 1, 0)とする
 				// 平面に当たる条件は視線と法線ベクトルが90度以上
 				//※塗りつぶしはDrawPixelという関数を使う。
-				auto n = Vector3(1.0f, 1.0f, 0.0f);
+				Plane plane(Vector3(0, 1, 0), 100);
+				auto n = Vector3(0.0f, 1.0f, 0.0f).Normalized();
 				auto d = Dot(n, ray);
-				if (d < 0)
+				if (d < 0.0f)
 				{
-					DrawPixel(x, y, GetColor(255, 255, 255));
+					//地面に当たっている
+					//平面の交点P=eye+ray*t
+					//t=w/u(wは平面からの距離)
+					//平面に近づく大きさ
+					//w = eye・N, u = -ray・N
+					//t=w/uとしたいが、平面にはoffset(d)がある
+					//t = (w+d)/u
+					//あとはここから交点Pを求める
+					//多分tは４万ぐらい
+					auto w = Dot(eye, plane.N);
+					auto u = Dot(-ray, plane.N);
+					auto T = (w + plane.d) / u;
+					auto P = eye + ray * T;
+					Color col(255, 255, 255);
+					col *= max(1.0, -Clamp(T / 1000.0f));
+					auto checker = ((int)(P.x / 20) + (int)(P.z / 20)) % 2 == 0 ? 1 : 0;
+					checker += P.x < 0 ? 1 : 0;
+					checker += P.z < 0 ? 1 : 0;
+					if (checker % 2 == 0)
+					{
+						DrawPixel(x, y, GetUint32ColorFromVectorColor(col));
+					}
 				}
 			}
 		}

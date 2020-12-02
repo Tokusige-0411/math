@@ -106,6 +106,14 @@ struct Sphere {
 	Sphere(float r, Position3& p) :radius(r), pos(p) {}
 };
 
+// 平面
+struct Plane
+{
+	Vector3 N;		// 法線ベクトル
+	float d;		// 原点からのオフセット(ただし-方向)
+	Plane(const Vector3& n, float offset = 0.0);
+};
+
 ///矩形を表す構造体
 struct Rect {
 	Position2 pos; //中心座標
