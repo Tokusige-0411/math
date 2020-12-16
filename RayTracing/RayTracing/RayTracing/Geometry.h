@@ -102,8 +102,9 @@ struct Circle {
 struct Sphere {
 	float radius;//îºåa
 	Position3 pos; //íÜêSç¿ïW
-	Sphere() :radius(0), pos(0, 0,0) {}
-	Sphere(float r, Position3& p) :radius(r), pos(p) {}
+	float reflectivity;
+	Sphere() :radius(0), pos(0, 0,0), reflectivity(0){}
+	Sphere(float r, Position3& p, float re) :radius(r), pos(p), reflectivity(re){}
 };
 
 // ïΩñ 
